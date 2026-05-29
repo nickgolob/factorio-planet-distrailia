@@ -1,0 +1,12 @@
+# Packaged mod builds
+*.zip
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor/tooling
+.vscode/
+.idea/
+*.swp
