@@ -18,7 +18,7 @@ The detailed **recipe/resource chain is intentionally TBD** (owner: nick).
 
 ### Worldgen & terrain
 - **Rail world**: large planet, lots of empty space between resource patches.
-- **Lava**: **large** lakes of lava (hazard + atmosphere, and a natural barrier - rail
+- **Lava**: lakes of lava (hazard + atmosphere, and a natural barrier - rail
   supports can't be placed on lava, so a wide lava lake also blocks elevated rails).
 - **Tiles**: a mix of `ash`, `desert`, `snow`, and `grass` biomes.
 - **Chasms**: infinite pits of darkness, lit by an eerie demonic glow - **impassable,
@@ -36,6 +36,10 @@ The detailed **recipe/resource chain is intentionally TBD** (owner: nick).
   start and make **rail travel between outposts the core logistics method**.
 - **Rails and rail signals are invulnerable to enemies** (cannot be destroyed by
   enemy attacks; still player-minable/deconstructable).
+- **Recommended companion mod: [Moshine](https://mods.factorio.com/mod/Moshine)** (not a
+  dependency) - adds maglev trains and neodymium rails (including neodymium *elevated*
+  rails), a great fit for the rail fantasy. Note: the chasm "too tall" collision (2.3)
+  should block its elevated rails too - verify when integrating.
 
 ### Resources & progression
 - **All Nauvis resources spawn**: iron, copper, coal, stone, crude oil, uranium.
@@ -43,6 +47,14 @@ The detailed **recipe/resource chain is intentionally TBD** (owner: nick).
 - **1 new science pack** (Distrailia science) plus a tech branch, as per a usual
   modded planet. The endgame tech sits at the top of this branch.
 - **Full recipe/resource chain: TBD.**
+
+### Access & star map
+- **Outermost world**: placed beyond Secretas (distance 50, vs. Secretas 45) on the
+  star map, reached via a Nauvis space connection.
+- **Gated by a discovery technology** (implemented in M1): travel unlocks only after
+  researching *Planet discovery: Distrailia* - prerequisites `planet-discovery-aquilo`
+  + `cryogenic-science-pack`, cost **2000 cryogenic science**. Squarely post-Aquilo
+  endgame content.
 
 ### Enemies & combat
 - **LOTS of enemies**, three factions combined:
@@ -112,6 +124,10 @@ Graphics (deep-void interior, lit rim, demonic light sources) are a dedicated mi
 - New science-pack `tool` item (used in existing labs), produced from Distrailia
   resources (chain TBD).
 - Tech branch requiring Distrailia science; the **superroboport** tech is the top.
+- **Planet-discovery tech** (`planet-discovery-distrailia`, done in M1): effect
+  `unlock-space-location -> distrailia`, prerequisites `planet-discovery-aquilo` +
+  `cryogenic-science-pack`, cost 2000 cryogenic science. A space location referenced by
+  such a tech is **locked until researched**, which is what gates travel to Distrailia.
 
 ### 2.6 Enemies, expansion & mod integration (`prototypes/enemies.lua`, `control.lua`)
 - Add Nauvis + Gleba enemies to the planet's enemy autoplace; crank
@@ -252,3 +268,4 @@ All five earlier unknowns are resolved to a concrete approach:
 - Armoured Biters: https://mods.factorio.com/mod/ArmouredBiters
 - Enemy AI Enhancement: https://mods.factorio.com/mod/smart-enemy-ai
 - B.R.E.A.M.: https://mods.factorio.com/mod/BREAM
+- Moshine (recommended - maglev trains + neodymium rails): https://mods.factorio.com/mod/Moshine

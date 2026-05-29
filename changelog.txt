@@ -3,4 +3,8 @@ Version: 0.1.0
 Date: 2026-05-28
   Features:
     - Initial project scaffold for the Distrailia planet mod.
-    - Registers the planet "Distrailia" on the Space Age star map with a Nauvis connection.
+    - M1: Distrailia is a loadable planet (deep-copied from Nauvis as a foundation),
+      with 100% solar and a Nauvis space connection.
+    - M1: Distrailia is the outermost world on the star map (distance 50, beyond Secretas).
+    - M1: Travel to Distrailia is gated behind a post-Aquilo discovery technology
+      ("Planet discovery: Distrailia") costing 2000 cryogenic science.

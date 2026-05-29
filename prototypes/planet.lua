@@ -1,72 +1,66 @@
--- Distrailia: "a hellscape of demons and rails".
+-- Distrailia planet definition.
 --
--- Defines the planet and its position on the Space Age star map. This is an
--- intentionally minimal starting point: map generation, tiles, autoplace, and
--- art are stubbed with TODOs so the planet can be fleshed out incrementally.
+-- M1 goal: a loadable planet, reachable late-game. We deep-copy Nauvis so the surface is
+-- guaranteed to generate (all Nauvis tiles, ores, and enemies) and then apply only the
+-- Distrailia M1 differences: its outermost star-map spot and 100% solar. Travel is gated
+-- by the discovery technology in prototypes/technology.lua. Bespoke terrain (large lava
+-- lakes, hell tiles, indestructible chasms), the new resources, enemy tuning, and custom
+-- art arrive in later milestones -- see PLAN.md.
 --
 -- Reference: https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
 
-local planet_map_gen = {
-  -- TODO: replace with bespoke Distrailia terrain (lava/ash tiles, demon enemies,
-  -- and rail-friendly traversal). Borrowed defaults keep the surface generatable
-  -- until custom map gen lands.
-  property_expression_names = {},
-  autoplace_settings = {},
-  cliff_settings = { name = "cliff", cliff_elevation_0 = 10, cliff_elevation_interval = 40 },
-  default_enable_all_autoplace_controls = false,
-}
+local util = require("util")
 
-data:extend({
-  {
-    type = "planet",
-    name = "distrailia",
-    -- TODO: add real art under graphics/. Placeholder paths are referenced so the
-    -- intended asset layout is documented; supply these before enabling in-game.
-    icon = "__distrailia__/graphics/icons/distrailia.png",
-    icon_size = 64,
-    starmap_icon = "__distrailia__/graphics/icons/distrailia-starmap.png",
-    starmap_icon_size = 512,
+local nauvis = data.raw.planet and data.raw.planet["nauvis"]
+if not nauvis then
+  error("[distrailia] The 'nauvis' planet prototype was not found. " ..
+        "Distrailia requires the Space Age expansion (space-age).")
+end
 
-    -- Star map placement. Tuned so Distrailia sits as its own destination; adjust
-    -- distance/orientation to taste relative to the vanilla planets.
-    distance = 38,
-    orientation = 0.66,
+-- Planet -----------------------------------------------------------------------
+local distrailia = util.table.deepcopy(nauvis)
 
-    gravity_pull = 10,
-    magnitude = 1.2,
-    label_orientation = 0.62,
+distrailia.name = "distrailia"
+distrailia.localised_name = { "space-location-name.distrailia" }
+distrailia.localised_description = { "space-location-description.distrailia" }
+distrailia.order = "z[distrailia]"
 
-    draw_orbit = true,
-    order = "z[distrailia]",
+-- Place Distrailia as the outermost world, beyond Secretas (distance 45) and the
+-- vanilla planets. A distinct orientation keeps it clear of the Secretas/Frozeta cluster.
+distrailia.distance = 50
+distrailia.orientation = 0.45
 
-    map_gen_settings = planet_map_gen,
+-- A hellscape bathed in light: full solar. (Nauvis is the 100% reference; set
+-- explicitly so the intent survives future surface_property edits.)
+distrailia.surface_properties = distrailia.surface_properties or {}
+distrailia.surface_properties["solar-power"] = 100
 
-    surface_properties = {
-      ["day-night-cycle"] = 7 * minute,
-      ["magnetic-field"] = 90,
-      ["solar-power"] = 50,
-      ["pressure"] = 1000,
-      ["gravity"] = 20,
-    },
+-- TODO(M5): replace the reused Nauvis icons / starmap art with bespoke Distrailia art.
 
-    pollutant_type = "pollution",
+data:extend({ distrailia })
 
-    -- TODO: define a procession set for arrival/departure cutscenes once art exists.
-    -- planet_procession_set = { arrival = { "default-b" }, departure = { "default-rocket-a" } },
-  },
-})
+-- Space connection -------------------------------------------------------------
+-- Reuse an existing Nauvis route so we inherit working asteroid spawn definitions
+-- rather than guessing required fields.
+local template
+for _, connection in pairs(data.raw["space-connection"] or {}) do
+  if connection.from == "nauvis" or connection.to == "nauvis" then
+    template = connection
+    break
+  end
+end
 
--- Connection so the planet is reachable from the existing star map graph.
-data:extend({
-  {
-    type = "space-connection",
-    name = "nauvis-distrailia",
-    subgroup = "planet-connections",
-    from = "nauvis",
-    to = "distrailia",
-    order = "z",
-    length = 16000,
-    -- TODO: tune asteroid spawn definitions for the route.
-    asteroid_spawn_definitions = {},
-  },
-})
+if not template then
+  error("[distrailia] No existing Nauvis space-connection found to use as a template.")
+end
+
+local route = util.table.deepcopy(template)
+route.name = "nauvis-distrailia"
+route.localised_name = { "space-connection-name.nauvis-distrailia" }
+route.from = "nauvis"
+route.to = "distrailia"
+route.length = 12000
+route.order = "z[distrailia]"
+-- TODO(M5): give the route its own icon (currently inherited from the template route).
+
+data:extend({ route })

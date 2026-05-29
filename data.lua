@@ -3,3 +3,4 @@
 -- in load order.
 
 require("prototypes.planet")
+require("prototypes.technology")
