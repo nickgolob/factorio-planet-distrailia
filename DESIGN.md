@@ -10,7 +10,7 @@
 
 A modded Space Age planet: a large rail world overrun by enemies. Only the decisions
 below are confirmed; the resource chain and exact tuning are **TBD (owner: nick)**.
-Roadmap: see [`MILESTONES.md`](MILESTONES.md).
+Roadmap: see [`TODO.md`](TODO.md).
 
 ## Worldgen & terrain
 - Rail world: large planet, lots of space between resource patches.

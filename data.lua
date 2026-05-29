@@ -4,3 +4,4 @@
 
 require("prototypes.planet")
 require("prototypes.technology")
+require("prototypes.entities.superroboport")

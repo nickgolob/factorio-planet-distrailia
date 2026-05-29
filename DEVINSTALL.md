@@ -59,7 +59,7 @@ If a load fails, Factorio shows the offending mod name and the Lua error at star
 ## Notes
 - The folder / junction name must be exactly `distrailia` (it must match `name` in
   `info.json`).
-- Non-mod files in the repo (`DESIGN.md`, `MILESTONES.md`, `README.md`, `DEVINSTALL.md`, `.git/`, etc.) are
+- Non-mod files in the repo (`DESIGN.md`, `TODO.md`, `README.md`, `DEVINSTALL.md`, `.git/`, etc.) are
   ignored by Factorio.
 - With a large mod list installed, for a clean test enable only Space Age +
   Elevated Rails + Distrailia.

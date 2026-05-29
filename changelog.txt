@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2026-05-28
+  Features:
+    - M6: Added the superroboport reward - a roboport fused with a hidden, indestructible
+      substation whose power supply area scales with quality, from 40x40 at normal up to 50x50
+      at legendary, plus a slightly larger logistic and construction range. Build, mine,
+      deconstruct, or destroy it and the two stay in sync.
+    - M6: Added a dedicated "Superroboport" technology (unlocks the recipe) gated behind
+      reaching Distrailia.
+  Info:
+    - The recipe ingredients and tech cost/prerequisites are placeholders pending the M3
+      resource chain (demonite / Distrailia science) and the final legendary-only gating; the
+      entity, its 50x50 power area, and the build/remove lifecycle are complete.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2026-05-28
   Features:

@@ -37,7 +37,7 @@ Enable **Distrailia** in the in-game mod manager and restart.
 
 ## Roadmap
 
-See [`MILESTONES.md`](MILESTONES.md) for the detailed milestone breakdown and
+See [`TODO.md`](TODO.md) for the detailed milestone breakdown and
 [`DESIGN.md`](DESIGN.md) for the full design.
 
 - [ ] Custom terrain / tiles (lava, ash, scorched ground)

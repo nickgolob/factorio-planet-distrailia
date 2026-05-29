@@ -1,4 +1,4 @@
-# Distrailia - Milestones
+# Distrailia - TODO
 
 > A hellscape of demons and rails.
 
@@ -35,6 +35,11 @@ Status: `[x]` done, `[ ]` todo.
 ### M5 - Visuals
 - [ ] Custom Distrailia icon (planet + starmap).
 - [ ] Chasm graphics (pits of darkness, demonic light).
+- [ ] Superroboport graphics: bespoke item/entity icon and on-map art (currently a placeholder
+  roboport + substation-badge composite).
 
 ### M6 - Reward
-- [ ] superroboport: roboport + substation, 50x50, at legendary.
+- [x] superroboport: roboport + hidden indestructible substation (power area scales with quality,
+  40x40 up to 50x50 at legendary), with a dedicated tech + recipe and the full build/remove lifecycle.
+- [ ] Final legendary-quality gating + recipe/tech wired to the M3 resource chain
+  (demonite / Distrailia science). Currently placeholder ingredients, gated behind reaching Distrailia.

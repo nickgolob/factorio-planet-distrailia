@@ -5,7 +5,7 @@
 -- Distrailia M1 differences: its outermost star-map spot and 100% solar. Travel is gated
 -- by the discovery technology in prototypes/technology.lua. Bespoke terrain (large lava
 -- lakes, hell tiles, indestructible chasms), the new resources, enemy tuning, and custom
--- art arrive in later milestones -- see MILESTONES.md.
+-- art arrive in later milestones -- see TODO.md.
 --
 -- Reference: https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
 
@@ -44,6 +44,16 @@ distrailia.surface_properties["solar-power"] = 100
 -- spawns). Net effect: sitting idle in Distrailia's orbit is calm.
 distrailia.asteroid_spawn_influence = 0
 distrailia.asteroid_spawn_definitions = {}
+
+-- Mod compat: "Redrawn Space Connections" rebuilds the entire connection graph in
+-- data-final-fixes, deriving each route's asteroids by interpolating the two endpoints'
+-- *planet* asteroid_spawn_definitions. That deletes our hand-built route and, because our
+-- orbit is intentionally empty, leaves the trip with only faint medium asteroids. Excluding
+-- Distrailia makes RSC keep our bespoke Nauvis->Distrailia route (dense huge asteroids) and
+-- not auto-wire the planet. The field is ignored when RSC isn't installed; guard anyway.
+if mods["Redrawn-Space-Connections"] then
+  distrailia.redrawn_connections_exclude = true
+end
 
 -- TODO(M5): replace the reused Nauvis icons / starmap art with bespoke Distrailia art.
 
