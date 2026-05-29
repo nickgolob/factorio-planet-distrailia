@@ -8,3 +8,5 @@ Date: 2026-05-28
     - M1: Distrailia is the outermost world on the star map (distance 50, beyond Secretas).
     - M1: Travel to Distrailia is gated behind a post-Aquilo discovery technology
       ("Planet discovery: Distrailia") costing 2000 cryogenic science.
+    - M1: The voyage to Distrailia is dense with huge asteroids (plus some big ones, no
+      promethium), ramping up on approach; its orbit stays calm when parked idle.

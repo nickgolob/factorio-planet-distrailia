@@ -35,21 +35,10 @@ git clone https://github.com/nickgolob/factorio-planet-distrailia.git distrailia
 
 Enable **Distrailia** in the in-game mod manager and restart.
 
-## Project layout
-
-```
-distrailia/
-├─ info.json              Mod metadata and dependencies
-├─ data.lua               Data-stage entry point
-├─ changelog.txt          Versioned changelog (Factorio format)
-├─ prototypes/
-│  └─ planet.lua          Planet + space-connection definitions
-├─ locale/
-│  └─ en/distrailia.cfg   English strings
-└─ graphics/              Art assets (TODO)
-```
-
 ## Roadmap
+
+See [`MILESTONES.md`](MILESTONES.md) for the detailed milestone breakdown and
+[`DESIGN.md`](DESIGN.md) for the full design.
 
 - [ ] Custom terrain / tiles (lava, ash, scorched ground)
 - [ ] Demon enemies and spawners
