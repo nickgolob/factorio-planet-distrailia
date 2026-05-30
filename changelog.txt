@@ -24,3 +24,5 @@ Date: 2026-05-28
       ("Planet discovery: Distrailia") costing 2000 cryogenic science.
     - M1: The voyage to Distrailia is dense with huge asteroids (plus some big ones, no
       promethium), ramping up on approach; its orbit stays calm when parked idle.
+    - M1: Compatibility with Redrawn Space Connections - keeps Distrailia's bespoke
+      huge-asteroid route instead of regenerating it (which had reduced it to medium).

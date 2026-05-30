@@ -49,4 +49,4 @@ See [`TODO.md`](TODO.md) for the detailed milestone breakdown and
 
 ## License
 
-TODO: choose a license.
+Released under the [MIT License](LICENSE).

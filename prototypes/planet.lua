@@ -10,9 +10,6 @@
 -- Reference: https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
 
 local util = require("util")
--- Space Age's own asteroid spawn generator (cache-warm: space-age is a hard dependency, so
--- it has already required this module by the time our data stage runs).
-local asteroid_util = require("__space-age__.prototypes.planet.asteroid-spawn-definitions")
 
 local nauvis = data.raw.planet and data.raw.planet["nauvis"]
 if not nauvis then
@@ -40,8 +37,9 @@ distrailia.surface_properties["solar-power"] = 100
 
 -- Asteroids only on the voyage, never when parked here. Nauvis's orbit asteroids are added
 -- later (space-age base-data-updates), so the deep copy carries none; make that explicit,
--- and also stop the planet from seeding the route (the connection below owns the voyage
--- spawns). Net effect: sitting idle in Distrailia's orbit is calm.
+-- and stop the planet from seeding its connections (influence 0). The dense voyage asteroids
+-- live on the connections themselves (see data-final-fixes.lua). Net effect: idling in
+-- Distrailia's orbit is calm; only the trip is dangerous.
 distrailia.asteroid_spawn_influence = 0
 distrailia.asteroid_spawn_definitions = {}
 
@@ -55,13 +53,35 @@ if mods["Redrawn-Space-Connections"] then
   distrailia.redrawn_connections_exclude = true
 end
 
+-- Rail-world resource spacing --------------------------------------------------
+-- Distrailia is a rail world: ore should sit in a few large, rich patches set far apart,
+-- so expanding means laying rail to a distant outpost instead of walking next door.
+-- Retune only the inherited Nauvis ore controls here (low frequency = spread out; big
+-- size + richness = patches worth the haul). Bespoke resources (demonite/hellstone/souls)
+-- and terrain arrive in later milestones. Dial these in live -- see DEV.md.
+distrailia.map_gen_settings = distrailia.map_gen_settings or {}
+distrailia.map_gen_settings.autoplace_controls = distrailia.map_gen_settings.autoplace_controls or {}
+local ore_controls = distrailia.map_gen_settings.autoplace_controls
+
+local rail_world_ore = { frequency = 0.25, size = 3, richness = 2 }
+for _, ore in ipairs({ "iron-ore", "copper-ore", "coal", "stone", "uranium-ore", "crude-oil" }) do
+  local control = ore_controls[ore] or {}
+  control.frequency = rail_world_ore.frequency
+  control.size = rail_world_ore.size
+  control.richness = rail_world_ore.richness
+  ore_controls[ore] = control
+end
+
 -- TODO(M5): replace the reused Nauvis icons / starmap art with bespoke Distrailia art.
 
 data:extend({ distrailia })
 
 -- Space connection -------------------------------------------------------------
--- Reuse an existing Nauvis route for its structural fields, then override its asteroid
--- spawns with our own dense, large-asteroid voyage profile (below).
+-- A direct Nauvis -> Distrailia route, for modpacks without a space-connection manager.
+-- (Some packs regenerate connections by planet distance and drop this one, linking Distrailia
+-- to its distance-neighbours instead. Either way, the dense large-asteroid voyage is applied
+-- in data-final-fixes.lua to whatever connections actually reach Distrailia.) Reuse an
+-- existing Nauvis route for its structural fields.
 local template
 for _, connection in pairs(data.raw["space-connection"] or {}) do
   if connection.from == "nauvis" or connection.to == "nauvis" then
@@ -109,5 +129,11 @@ local distrailia_voyage =
   },
 }
 route.asteroid_spawn_definitions = asteroid_util.spawn_definitions(distrailia_voyage)
+
+-- See the Redrawn Space Connections note above: also flag the connection itself so RSC keeps
+-- it verbatim (with these asteroid definitions) instead of regenerating it.
+if mods["Redrawn-Space-Connections"] then
+  route.redrawn_connections_keep = true
+end
 
 data:extend({ route })
