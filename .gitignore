@@ -14,3 +14,14 @@ desktop.ini
 # Downloaded local test binaries (luacheck.exe, etc.) -- see tools/run-tests.ps1.
 # The test *sources* (spec/, lib/, .luacheckrc, tools/*.lua, tools/*.ps1) ARE committed.
 tools/bin/
+
+# Node tooling for integration tests (factorio-test-cli) -- see TESTING.md.
+node_modules/
+package-lock.json
+
+# Isolated throwaway Factorio data dir used by the integration test runner.
+.factorio-test-data/
+
+# Machine-specific integration-test config (has an absolute factorioPath). Commit the template
+# factorio-test.example.json instead; copy it to factorio-test.json per machine. See TESTING.md.
+/factorio-test.json

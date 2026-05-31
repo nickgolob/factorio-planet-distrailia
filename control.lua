@@ -119,3 +119,10 @@ script.on_event(defines.events.on_object_destroyed, on_destroyed)
 
 script.on_init(resync_all)
 script.on_configuration_changed(resync_all)
+
+-- Integration tests (FactorioTest). Active only when the factorio-test mod is present, which
+-- happens solely under the test runner (it's a `? factorio-test` optional dependency); this
+-- never loads in normal play. See tests/superroboport.lua and TESTING.md.
+if script.active_mods["factorio-test"] then
+  require("__factorio-test__/init")({ "tests.superroboport" })
+end

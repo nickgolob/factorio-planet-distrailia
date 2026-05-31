@@ -49,5 +49,18 @@ local control_stage = {
 files["control.lua"] = control_stage
 files["scripts/**/*.lua"] = control_stage
 
--- Tests: busted-style globals (describe / it / assert / ...).
+-- Unit tests (pure logic): busted-style globals (describe / it / assert / ...).
 files["spec/**/*.lua"] = { std = "lua53+busted" }
+
+-- Integration tests run in the control stage under FactorioTest, which injects its own test
+-- globals (test / async / after_ticks / ...) on top of the runtime API.
+files["tests/**/*.lua"] = {
+  std = "lua53", -- FactorioTest does NOT replace global `assert`; tests use plain assert(cond, msg)
+  read_globals = { "game", "script", "rendering", "commands", "remote", "prototypes", "helpers", "storage" },
+  globals = {
+    -- FactorioTest-provided globals.
+    "test", "it", "describe",
+    "before_all", "after_all", "before_each", "after_each", "after_test",
+    "async", "done", "on_tick", "after_ticks", "ticks_between_tests", "tags",
+  },
+}

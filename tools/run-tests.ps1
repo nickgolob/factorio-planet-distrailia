@@ -1,17 +1,18 @@
 # Distrailia test runner (Windows / local).
 #
-# Runs the two suites that don't need Factorio itself:
+# Default: the two suites that don't need Factorio:
 #   1. luacheck   -- static analysis (tools/bin/luacheck.exe, or luacheck on PATH)
 #   2. unit tests -- pure logic via Lua + tools/run_specs.lua (busted-compatible specs)
 #
-# CI (.github/workflows/test.yml) runs the same .luacheckrc and spec/ files with the canonical
-# luacheck + busted on Linux. In-game integration tests (FactorioTest) need a Factorio binary and
-# are not run here.
+# With -Integration: also runs the in-game FactorioTest suite (tests/) headless via
+# factorio-test-cli (requires the integration toolchain set up per TESTING.md).
 #
 # First-time setup (binaries are gitignored under tools/bin/):
 #   Lua:      winget install DEVCOM.Lua
 #   luacheck: download luacheck.exe into tools/bin/ from
 #             https://github.com/lunarmodules/luacheck/releases
+
+param([switch]$Integration)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -33,7 +34,7 @@ $lua = Find-Exe @(
 $luacheck = Find-Exe @((Join-Path $root "tools\bin\luacheck.exe")) "luacheck"
 
 $failed = $false
-$targets = @("control.lua", "data.lua", "prototypes", "lib", "spec", "tools")
+$targets = @("control.lua", "data.lua", "prototypes", "lib", "spec", "tests", "tools")
 
 Write-Host "== luacheck ==" -ForegroundColor Cyan
 if ($luacheck) {
@@ -56,6 +57,19 @@ if ($lua) {
 } else {
   Write-Error "lua.exe not found. Install with: winget install DEVCOM.Lua"
   $failed = $true
+}
+
+if ($Integration) {
+  Write-Host "`n== integration tests (FactorioTest, headless) ==" -ForegroundColor Cyan
+  & (Join-Path $PSScriptRoot "patch-factorio-test-cli.ps1")
+  $ftMod = @(Get-ChildItem (Join-Path $root ".factorio-test-data\mods") -Filter "factorio-test_*.zip" -ErrorAction SilentlyContinue)
+  if (-not $ftMod -or $ftMod.Count -eq 0) {
+    Write-Warning "factorio-test mod not staged in .factorio-test-data\mods\ - see TESTING.md. Skipping integration."
+    $failed = $true
+  } else {
+    & npx --no-install factorio-test run --output-timeout 120
+    if ($LASTEXITCODE -ne 0) { $failed = $true }
+  }
 }
 
 if ($failed) {

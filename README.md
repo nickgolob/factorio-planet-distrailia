@@ -47,6 +47,11 @@ See [`TODO.md`](TODO.md) for the detailed milestone breakdown and
 - [ ] Arrival/departure cutscene procession set
 - [ ] Balance pass
 
+## Testing
+
+Static analysis (luacheck) and unit tests run without Factorio; in-game integration tests run
+locally via FactorioTest. See [`TESTING.md`](TESTING.md) for install steps and how to run each.
+
 ## License
 
 Released under the [MIT License](LICENSE).

@@ -1,0 +1,10 @@
+{
+  "_comment": "Template for the integration-test runner. Copy to factorio-test.json (gitignored) and set factorioPath. See TESTING.md.",
+  "modPath": ".",
+  "factorioPath": "CHANGE_ME - path to the Factorio executable; per-OS examples in TESTING.md",
+  "dataDirectory": "./.factorio-test-data",
+  "mods": ["space-age", "quality", "elevated-rails", "PlanetsLib"],
+  "test": {
+    "default_timeout": 3600
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "distrailia-dev",
+  "private": true,
+  "description": "Dev/test tooling for the Distrailia Factorio mod. NOT part of the shipped mod (Factorio ignores it).",
+  "scripts": {
+    "test:integration": "factorio-test run"
+  },
+  "devDependencies": {
+    "factorio-test-cli": "^3.5.1"
+  }
+}

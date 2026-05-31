@@ -3,17 +3,18 @@
 -- Design (DESIGN.md "The reward"): a combined roboport + substation that
 -- supplies a 50x50 power area, obtained at legendary quality at the top of the tech branch.
 --
--- Implementation follows the confirmed "Utility Station" precedent: the visible, blueprintable
--- entity is a roboport, and a hidden electric pole sits underneath it (spawned at runtime by
--- control.lua and removed with it) to supply power. The pole is selectable -- but not minable or
--- deconstructable -- so you can hover its centre to see the blue supply-area square and click it
--- to open the electric-network GUI, exactly like any pole. It keeps a substation's wire reach so
--- it auto-joins the power grid.
+-- Implementation follows the confirmed "Utility Station" precedent: the blueprintable entity is a
+-- roboport, and a real electric pole rises from its centre (spawned at runtime by control.lua and
+-- removed with it) to supply power. The pole is selectable -- but not minable or deconstructable --
+-- so you can hover it to see the blue supply-area square and click it to open the electric-network
+-- GUI, exactly like any pole, and its copper wires visibly link it into your grid.
 --
 -- The power area scales with quality. The engine's built-in pole bonus is a flat +1 to
 -- supply_area_distance per quality level, which could only span 40x40->50x50 -- a dull spread --
 -- so instead we define one hidden-pole variant per quality with an explicit supply_area_distance,
 -- spaced evenly across the quality tiers from a 30x30 floor (normal) to exactly 50x50 (legendary).
+-- Those variants are generated in data-final-fixes.lua -- quality prototypes (data.raw.quality)
+-- are NOT yet populated during the data stage, so this file only defines the base template.
 -- control.lua spawns the variant matching the roboport's quality (at normal quality, no extra bonus).
 --
 -- TODO(M3): re-point the recipe ingredients and the technology cost/prerequisites onto the
@@ -28,18 +29,19 @@
 --   Utility Station precedent: https://github.com/dmikalova/factorio-mods/tree/main/utility-station
 
 local util = require("util")
-local supply_area = require("lib.supply_area")
 
 local PARENT = "superroboport"
 local CHILD = "superroboport-substation"
 
 local roboport_proto = data.raw.roboport and data.raw.roboport["roboport"]
-local substation_proto = data.raw["electric-pole"] and data.raw["electric-pole"]["substation"]
+-- Reuse a real, tall pole's graphics + wire-connection points so the power pole is visible rising
+-- from the roboport's centre and copper wires attach at its top.
+local pole_source = data.raw["electric-pole"] and data.raw["electric-pole"]["big-electric-pole"]
 if not roboport_proto then
   error("[distrailia] base 'roboport' prototype not found; superroboport requires base + space-age.")
 end
-if not substation_proto then
-  error("[distrailia] base 'substation' prototype not found; superroboport requires base + space-age.")
+if not pole_source then
+  error("[distrailia] base 'big-electric-pole' prototype not found; superroboport requires base.")
 end
 
 -- Shared placeholder icon: a roboport with a small substation badge (M5 replaces with art).
@@ -62,42 +64,34 @@ entity.placeable_by = { item = PARENT, count = 1 }
 entity.next_upgrade = nil
 entity.fast_replaceable_group = nil
 
--- Hidden substation template, spawned under the roboport at runtime by control.lua. ---------
--- Collides with nothing (it sits under the roboport) and is invisible, but is SELECTABLE (and
--- indestructible / not minable) so you can hover its centre to see the blue supply-area square
--- and click it to open the electric-network GUI, like any pole. Keeps a substation's wire reach
--- so it auto-joins the power grid. supply_area_distance is set per quality variant below.
-local pole = util.table.deepcopy(substation_proto)
+-- Power-pole template under the roboport: a real, VISIBLE electric pole that rises from the centre
+-- (the "power pole extending up in the middle"). We keep big-electric-pole's pictures and its
+-- connection points untouched, so the pole is drawn and copper wires attach at its top and are
+-- clearly visible -- this also avoids the earlier empty-sprite / connection-point hack entirely.
+-- It is selectable (hover -> blue supply-area square; click -> electric-network GUI) but
+-- indestructible / not minable. data-final-fixes.lua deep-copies this once per quality (setting the
+-- per-tier supply_area_distance); control.lua spawns the matching variant under each roboport.
+local pole = util.table.deepcopy(pole_source)
 pole.name = CHILD
 pole.localised_name = { "entity-name." .. PARENT }
 pole.localised_description = { "entity-description." .. PARENT }
+pole.supply_area_distance = 15 -- placeholder; data-final-fixes sets the real per-quality value (30x30..50x50)
+pole.maximum_wire_distance = 30 -- placeholder; data-final-fixes sets the real per-quality reach (30 up to 50 at legendary)
 pole.selectable_in_game = true
-pole.collision_mask = { layers = {} }
-pole.collision_box = { { -0.05, -0.05 }, { 0.05, 0.05 } }
-pole.selection_box = { { -1, -1 }, { 1, 1 } } -- small centre target; the roboport (4x4) owns the rest
--- Win the cursor over the roboport on that centre tile (both otherwise default to 50) so hovering
--- the centre shows the blue supply-area square and clicking it opens the electric-network GUI.
+-- Win the cursor over the roboport where the pole overlaps it, so hovering the pole shows the blue
+-- supply-area square and clicking it opens the electric-network GUI (both otherwise default to 50).
 pole.selection_priority = 100
+pole.collision_mask = { layers = {} } -- collide with nothing: it sits inside the roboport's footprint
+pole.collision_box = { { -0.05, -0.05 }, { 0.05, 0.05 } }
+pole.draw_copper_wires = true  -- show the wires linking it into the power grid
+pole.draw_circuit_wires = false
+pole.circuit_wire_max_distance = 0 -- no circuit-network hookups
 pole.icon = nil
 pole.icon_size = nil
 pole.icons = icons
--- An electric pole's `pictures` is a RotatedSprite (requires `direction_count`);
--- util.empty_sprite() is a plain Sprite and fails to load. Use a 1-direction empty
--- rotated sprite so the hidden pole stays invisible but valid.
-pole.pictures = { filename = "__core__/graphics/empty.png", width = 1, height = 1, direction_count = 1 }
--- The pole's wire-connection-point count must equal pictures.direction_count. The vanilla
--- substation ships 4 (one per rotation); collapse to a single point to match our 1-direction
--- empty sprite. Connectivity is by wire reach (not point count); the wire attaches at the centre.
-pole.connection_points = { { wire = { copper = { 0, 0 } }, shadow = { copper = { 0, 0 } } } }
-pole.radius_visualisation_picture = nil
--- Show the copper wires so the superroboport is visibly part of the power grid. (It auto-connects
--- either way -- draw_copper_wires only controls the graphic -- but hiding them made it look unpowered.)
-pole.draw_copper_wires = true
-pole.draw_circuit_wires = false
-pole.circuit_wire_max_distance = 0 -- no circuit-network hookups on the hidden pole
+pole.minable = nil
 pole.next_upgrade = nil
 pole.fast_replaceable_group = nil
-pole.minable = nil
 pole.flags = {
   "placeable-off-grid",
   "not-on-map",
@@ -109,34 +103,8 @@ pole.flags = {
   "hide-alt-info",
 }
 
--- One hidden-pole variant per quality, each with an explicit supply_area_distance so we own the
--- curve (the engine's built-in +1/level only spans 40x40->50x50). Spaced evenly across the
--- quality TIERS from a 30x30 floor (normal) to exactly 50x50 (legendary) -- i.e. by sorted rank,
--- not by raw level (legendary is level 5, skipping 4, so scaling by level would leave an uneven
--- jump at the top). control.lua spawns the variant named "<CHILD>-<quality>" at normal quality.
-local FLOOR_RADIUS = 15 -- normal -> 30x30
-local CAP_RADIUS = 25   -- legendary -> 50x50
-
--- Sort the (non-hidden) qualities low -> high, then ask the pure curve module for an evenly
--- spaced supply-area radius per tier. The arithmetic lives in lib/supply_area.lua so it can be
--- unit-tested (spec/supply_area_spec.lua); here we only feed it the quality tier names.
-local qualities = {}
-for _, q in pairs(data.raw.quality or {}) do
-  if not q.hidden then qualities[#qualities + 1] = q end
-end
-table.sort(qualities, function(a, b) return (a.level or 0) < (b.level or 0) end)
-
-local sorted_names = {}
-for i, q in ipairs(qualities) do sorted_names[i] = q.name end
-local radius_by_quality = supply_area.curve(sorted_names, FLOOR_RADIUS, CAP_RADIUS)
-
-local pole_variants = {}
-for _, q in ipairs(qualities) do
-  local variant = util.table.deepcopy(pole)
-  variant.name = CHILD .. "-" .. q.name
-  variant.supply_area_distance = radius_by_quality[q.name]
-  pole_variants[#pole_variants + 1] = variant
-end
+-- The per-quality variants of this template are generated in data-final-fixes.lua (see the note
+-- near the top): quality prototypes are not populated yet during the data stage.
 
 -- Item -------------------------------------------------------------------------------------
 local item = util.table.deepcopy(data.raw.item["roboport"])
@@ -199,8 +167,4 @@ local tech = {
   order = "z-[" .. PARENT .. "]",
 }
 
-local protos = { entity, item, recipe, tech }
-for _, variant in pairs(pole_variants) do
-  protos[#protos + 1] = variant
-end
-data:extend(protos)
+data:extend({ entity, item, recipe, tech, pole })

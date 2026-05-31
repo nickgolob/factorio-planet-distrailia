@@ -10,6 +10,7 @@
     "space-age >= 2.0",
     "PlanetsLib >= 1.11.1",
     "? PlanetsLibTiers >= 1.2.0",
-    "? elevated-rails >= 2.0"
+    "? elevated-rails >= 2.0",
+    "? factorio-test >= 3.0.0"
   ]
 }

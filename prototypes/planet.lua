@@ -1,29 +1,30 @@
 -- Distrailia planet definition.
 --
--- We deep-copy Nauvis so the surface is guaranteed to generate (all Nauvis tiles, ores, and
--- enemies), then apply the Distrailia differences (outermost star-map spot, 100% solar,
--- rail-world ore spacing). Placement goes through PlanetsLib so Distrailia joins the shared
--- orbit tree like the pack's other planets: orbiting "star" puts it at the same absolute
--- distance/orientation it used before, but now orbit-aware mods move it with its parent and
--- treat it consistently. PlanetsLib: Tiers, if installed, gets a tier value so tier-aware
--- mods order Distrailia at the post-endgame far edge. Travel is gated by the discovery
--- technology in prototypes/technology.lua. Bespoke terrain, new resources, enemy tuning, and
--- custom art arrive in later milestones -- see TODO.md.
+-- Authored from scratch (no Nauvis copy): the planet prototype and its map generation are
+-- defined explicitly, following the majority pattern of the pack's other planet mods (an
+-- authored `type="planet"` prototype + a map_gen_settings built on Wube's planet-map-gen
+-- helper). The map generation (desert land, water + lava lakes, Nauvis ores) lives in
+-- prototypes/planet/map-gen.lua.
+--
+-- Placement goes through PlanetsLib so Distrailia joins the shared orbit tree: orbiting "star"
+-- at distance 50 / orientation 0.45 puts it at the outermost slot beyond Secretas, and
+-- orbit-aware mods treat it consistently. PlanetsLib: Tiers, if installed, gets a tier value so
+-- tier-aware mods order it at the post-endgame far edge. Travel is gated by the discovery
+-- technology in prototypes/technology.lua.
+--
+-- Icons are vanilla PLACEHOLDERS until bespoke art lands in M5. Bespoke tiles, new resources
+-- (M3), enemy tuning (M2), and chasms arrive in later milestones -- see TODO.md.
 --
 -- Refs: PlanetsLib README "Defining planets";
 --       https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
+--       __space-age__/prototypes/planet/planet.lua (vanilla planet prototype shape)
 
 local util = require("util")
+local planet_map_gen = require("prototypes.planet.map-gen")
 -- Space Age's own asteroid spawn generator (cache-warm: space-age is a hard dependency, so it
 -- has already required this module by the time our data stage runs). Used by the dense voyage
 -- asteroid profile applied to the Nauvis->Distrailia connection below.
 local asteroid_util = require("__space-age__.prototypes.planet.asteroid-spawn-definitions")
-
-local nauvis = data.raw.planet and data.raw.planet["nauvis"]
-if not nauvis then
-  error("[distrailia] The 'nauvis' planet prototype was not found. " ..
-        "Distrailia requires the Space Age expansion (space-age).")
-end
 
 if not PlanetsLib then
   error("[distrailia] PlanetsLib was not found. Distrailia depends on PlanetsLib for " ..
@@ -31,28 +32,36 @@ if not PlanetsLib then
 end
 
 -- Planet -----------------------------------------------------------------------
-local distrailia = util.table.deepcopy(nauvis)
-
-distrailia.name = "distrailia"
-distrailia.localised_name = { "space-location-name.distrailia" }
-distrailia.localised_description = { "space-location-description.distrailia" }
-distrailia.order = "z[distrailia]"
-
--- Placement is via PlanetsLib's orbit, set just before PlanetsLib:extend below. The planet
--- must NOT carry top-level distance/orientation when passed to extend (PlanetsLib errors).
-
--- A hellscape bathed in light: full solar. (Nauvis is the 100% reference; set
--- explicitly so the intent survives future surface_property edits.)
-distrailia.surface_properties = distrailia.surface_properties or {}
-distrailia.surface_properties["solar-power"] = 100
-
--- Asteroids only on the voyage, never when parked here. Nauvis's orbit asteroids are added
--- later (space-age base-data-updates), so the deep copy carries none; make that explicit,
--- and stop the planet from seeding its connections (influence 0). The dense voyage asteroids
--- live on the connections themselves (see data-final-fixes.lua). Net effect: idling in
--- Distrailia's orbit is calm; only the trip is dangerous.
-distrailia.asteroid_spawn_influence = 0
-distrailia.asteroid_spawn_definitions = {}
+-- Authored explicitly. Icons are PLACEHOLDERS (vanilla Nauvis art) until bespoke art lands in
+-- M5. surface_properties: 100% solar per DESIGN.md (a hellscape bathed in light); gravity and
+-- pressure are first-pass placeholders matching Nauvis -- tune later. Map generation comes from
+-- prototypes/planet/map-gen.lua.
+local distrailia =
+{
+  type = "planet",
+  name = "distrailia",
+  localised_name = { "space-location-name.distrailia" },
+  localised_description = { "space-location-description.distrailia" },
+  icon = "__base__/graphics/icons/nauvis.png", -- TODO(M5): bespoke Distrailia icon
+  icon_size = 64,
+  starmap_icon = "__base__/graphics/icons/starmap-planet-nauvis.png", -- TODO(M5): bespoke starmap art
+  starmap_icon_size = 512,
+  gravity_pull = 10, -- placeholder (Nauvis = 10); tune later
+  order = "z[distrailia]",
+  subgroup = "planets",
+  map_gen_settings = planet_map_gen.distrailia(),
+  surface_properties =
+  {
+    ["solar-power"] = 100, -- a hellscape bathed in light (DESIGN.md)
+    ["pressure"] = 1000,   -- placeholder (Nauvis reference); tune later
+    ["gravity"] = 9.81,    -- placeholder (Nauvis reference); tune later
+  },
+  -- Asteroids only on the voyage, never when parked here: empty definitions + influence 0 keep
+  -- the orbit calm. The dense voyage asteroids live on the connection below. Net effect: idling
+  -- in Distrailia's orbit is calm; only the trip is dangerous.
+  asteroid_spawn_influence = 0,
+  asteroid_spawn_definitions = {},
+}
 
 -- Mod compat: "Redrawn Space Connections" rebuilds the entire connection graph in
 -- data-final-fixes, deriving each route's asteroids by interpolating the two endpoints'
@@ -65,16 +74,17 @@ if mods["Redrawn-Space-Connections"] then
 end
 
 -- Rail-world resource spacing --------------------------------------------------
--- Distrailia is a rail world: ore should sit in a few large, rich patches set far apart,
--- so expanding means laying rail to a distant outpost instead of walking next door.
--- Retune only the inherited Nauvis ore controls here (low frequency = spread out; big
--- size + richness = patches worth the haul). Bespoke resources (demonite/hellstone/souls)
--- and terrain arrive in later milestones. Dial these in live -- see DEV.md.
-distrailia.map_gen_settings = distrailia.map_gen_settings or {}
-distrailia.map_gen_settings.autoplace_controls = distrailia.map_gen_settings.autoplace_controls or {}
+-- Distrailia is a rail world: patches spread far apart with lots of empty ground between
+-- them, so expanding means laying rail to a distant outpost. FREQUENCY is the spacing
+-- lever (lower = fewer, more separated patches). Keep SIZE ~1: enlarging patches just
+-- fills the gaps back in and fights the sparseness. RICHNESS is pushed up so the few
+-- distant patches are still worth hauling. Retunes the Nauvis ore controls;
+-- bespoke resources (demonite/hellstone/souls) and terrain arrive in later milestones.
+-- NOTE: near the landing/origin the starting-area guarantee still seeds starter patches
+-- regardless of frequency -- judge sparseness away from spawn. Dial live -- see DEV.md.
 local ore_controls = distrailia.map_gen_settings.autoplace_controls
 
-local rail_world_ore = { frequency = 0.25, size = 3, richness = 2 }
+local rail_world_ore = { frequency = 0.2, size = 1, richness = 3 }
 for _, ore in ipairs({ "iron-ore", "copper-ore", "coal", "stone", "uranium-ore", "crude-oil" }) do
   local control = ore_controls[ore] or {}
   control.frequency = rail_world_ore.frequency
@@ -83,16 +93,10 @@ for _, ore in ipairs({ "iron-ore", "copper-ore", "coal", "stone", "uranium-ore",
   ore_controls[ore] = control
 end
 
--- TODO(M5): replace the reused Nauvis icons / starmap art with bespoke Distrailia art.
-
 -- Outermost world, beyond Secretas (distance 45). Orbit "star" directly so the absolute
--- position equals the orbit's (distance 50, orientation 0.45) -- the same spot used before the
--- PlanetsLib refactor. A distinct orientation keeps it clear of the Secretas/Frozeta cluster.
--- Strip any distance/orientation/position carried over from the Nauvis copy first, since
--- PlanetsLib:extend rejects top-level distance/orientation.
-distrailia.distance = nil
-distrailia.orientation = nil
-distrailia.position = nil
+-- position is the orbit's (distance 50, orientation 0.45). A distinct orientation keeps it
+-- clear of the Secretas/Frozeta cluster. PlanetsLib:extend rejects top-level
+-- distance/orientation, so placement is expressed purely as the orbit below.
 distrailia.orbit = {
   parent = { type = "space-location", name = "star" },
   distance = 50,
@@ -124,7 +128,8 @@ for _, connection in pairs(data.raw["space-connection"] or {}) do
 end
 
 if not template then
-  error("[distrailia] No existing Nauvis space-connection found to use as a template.")
+  error("[distrailia] No existing Nauvis space-connection found to use as a template. " ..
+        "Distrailia requires the Space Age expansion (space-age).")
 end
 
 local route = util.table.deepcopy(template)
