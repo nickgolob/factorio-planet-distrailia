@@ -10,3 +10,7 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Downloaded local test binaries (luacheck.exe, etc.) -- see tools/run-tests.ps1.
+# The test *sources* (spec/, lib/, .luacheckrc, tools/*.lua, tools/*.ps1) ARE committed.
+tools/bin/

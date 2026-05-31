@@ -1,20 +1,33 @@
 -- Distrailia planet definition.
 --
--- M1 goal: a loadable planet, reachable late-game. We deep-copy Nauvis so the surface is
--- guaranteed to generate (all Nauvis tiles, ores, and enemies) and then apply only the
--- Distrailia M1 differences: its outermost star-map spot and 100% solar. Travel is gated
--- by the discovery technology in prototypes/technology.lua. Bespoke terrain (large lava
--- lakes, hell tiles, indestructible chasms), the new resources, enemy tuning, and custom
--- art arrive in later milestones -- see TODO.md.
+-- We deep-copy Nauvis so the surface is guaranteed to generate (all Nauvis tiles, ores, and
+-- enemies), then apply the Distrailia differences (outermost star-map spot, 100% solar,
+-- rail-world ore spacing). Placement goes through PlanetsLib so Distrailia joins the shared
+-- orbit tree like the pack's other planets: orbiting "star" puts it at the same absolute
+-- distance/orientation it used before, but now orbit-aware mods move it with its parent and
+-- treat it consistently. PlanetsLib: Tiers, if installed, gets a tier value so tier-aware
+-- mods order Distrailia at the post-endgame far edge. Travel is gated by the discovery
+-- technology in prototypes/technology.lua. Bespoke terrain, new resources, enemy tuning, and
+-- custom art arrive in later milestones -- see TODO.md.
 --
--- Reference: https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
+-- Refs: PlanetsLib README "Defining planets";
+--       https://lua-api.factorio.com/latest/prototypes/PlanetPrototype.html
 
 local util = require("util")
+-- Space Age's own asteroid spawn generator (cache-warm: space-age is a hard dependency, so it
+-- has already required this module by the time our data stage runs). Used by the dense voyage
+-- asteroid profile applied to the Nauvis->Distrailia connection below.
+local asteroid_util = require("__space-age__.prototypes.planet.asteroid-spawn-definitions")
 
 local nauvis = data.raw.planet and data.raw.planet["nauvis"]
 if not nauvis then
   error("[distrailia] The 'nauvis' planet prototype was not found. " ..
         "Distrailia requires the Space Age expansion (space-age).")
+end
+
+if not PlanetsLib then
+  error("[distrailia] PlanetsLib was not found. Distrailia depends on PlanetsLib for " ..
+        "star-map placement (see info.json).")
 end
 
 -- Planet -----------------------------------------------------------------------
@@ -25,10 +38,8 @@ distrailia.localised_name = { "space-location-name.distrailia" }
 distrailia.localised_description = { "space-location-description.distrailia" }
 distrailia.order = "z[distrailia]"
 
--- Place Distrailia as the outermost world, beyond Secretas (distance 45) and the
--- vanilla planets. A distinct orientation keeps it clear of the Secretas/Frozeta cluster.
-distrailia.distance = 50
-distrailia.orientation = 0.45
+-- Placement is via PlanetsLib's orbit, set just before PlanetsLib:extend below. The planet
+-- must NOT carry top-level distance/orientation when passed to extend (PlanetsLib errors).
 
 -- A hellscape bathed in light: full solar. (Nauvis is the 100% reference; set
 -- explicitly so the intent survives future surface_property edits.)
@@ -74,14 +85,36 @@ end
 
 -- TODO(M5): replace the reused Nauvis icons / starmap art with bespoke Distrailia art.
 
-data:extend({ distrailia })
+-- Outermost world, beyond Secretas (distance 45). Orbit "star" directly so the absolute
+-- position equals the orbit's (distance 50, orientation 0.45) -- the same spot used before the
+-- PlanetsLib refactor. A distinct orientation keeps it clear of the Secretas/Frozeta cluster.
+-- Strip any distance/orientation/position carried over from the Nauvis copy first, since
+-- PlanetsLib:extend rejects top-level distance/orientation.
+distrailia.distance = nil
+distrailia.orientation = nil
+distrailia.position = nil
+distrailia.orbit = {
+  parent = { type = "space-location", name = "star" },
+  distance = 50,
+  orientation = 0.45,
+}
+PlanetsLib:extend(distrailia)
+
+-- PlanetsLib: Tiers (optional). Distrailia isn't in the central tier list, so without this it
+-- falls back to the default (~3.33) and tier-aware mods mis-order it. As the outermost,
+-- post-Aquilo hellscape it sits past Secretas (5.6) and panglia (5.7), so register it as a
+-- post-endgame tier. Guarded: only runs when Tiers is installed (it owns this mod-data).
+local tierlist = data.raw["mod-data"] and data.raw["mod-data"]["PlanetsLib-tierlist"]
+if tierlist and tierlist.data and tierlist.data.planet then
+  tierlist.data.planet["distrailia"] = 6
+end
 
 -- Space connection -------------------------------------------------------------
--- A direct Nauvis -> Distrailia route, for modpacks without a space-connection manager.
--- (Some packs regenerate connections by planet distance and drop this one, linking Distrailia
--- to its distance-neighbours instead. Either way, the dense large-asteroid voyage is applied
--- in data-final-fixes.lua to whatever connections actually reach Distrailia.) Reuse an
--- existing Nauvis route for its structural fields.
+-- A direct Nauvis -> Distrailia route carrying the dense large-asteroid voyage profile built
+-- below. Reuse an existing Nauvis route for its structural fields. A connection manager such
+-- as Redrawn Space Connections would otherwise delete and regenerate this route (discarding
+-- our asteroid profile), so we flag the planet and the route to be kept as-is (see the
+-- "Redrawn Space Connections" notes above and below).
 local template
 for _, connection in pairs(data.raw["space-connection"] or {}) do
   if connection.from == "nauvis" or connection.to == "nauvis" then
@@ -103,24 +136,25 @@ route.length = 12000
 route.order = "z[distrailia]"
 -- TODO(M5): give the route its own icon (currently inherited from the template route).
 
--- Dense "super large" asteroids for the whole voyage to Distrailia. Reuse Space Age's own
--- asteroid generator with a custom profile: heavy on huge asteroids (peaking near the
--- densest vanilla route -- the Shattered Planet run tops out at 0.111) plus some big ones,
--- and no promethium. Density ramps up as you approach. spawn_definitions() with no planet
--- argument yields route spawns interpolated along the trip (distance 0..1); the planet's
--- own empty definitions above keep the orbit calm when idle.
+-- Voyage asteroids, tuned to sit a touch above Frozeta's route (Secretas mod "aquilo_secretas"
+-- profile, the reference point: big peaks ~0.0025 then fades, huge rises to ~0.00125 on
+-- approach). Distrailia leans into HUGE asteroids as its signature, so huge ramps up to ~0.0018
+-- near the planet (~1.4x Frozeta's huge) while big stays light and flat. No promethium.
+-- These are the live-tuning knobs: nudge the probabilities up/down to taste (needs a Factorio
+-- restart -- this is data stage). spawn_definitions() with no planet argument yields route
+-- spawns interpolated along the trip (distance 0..1); the planet's own empty definitions above
+-- keep the orbit calm when idle.
 local distrailia_voyage =
 {
   probability_on_range_big =
   {
-    { position = 0.05, probability = 0.02, angle_when_stopped = asteroid_util.big_angle },
-    { position = 0.95, probability = 0.04, angle_when_stopped = asteroid_util.big_angle },
+    { position = 0.05, probability = 0.0008, angle_when_stopped = asteroid_util.big_angle },
+    { position = 0.95, probability = 0.0008, angle_when_stopped = asteroid_util.big_angle },
   },
   probability_on_range_huge =
   {
-    { position = 0.05, probability = 0.03, angle_when_stopped = asteroid_util.huge_angle },
-    { position = 0.50, probability = 0.07, angle_when_stopped = asteroid_util.huge_angle },
-    { position = 0.95, probability = 0.11, angle_when_stopped = asteroid_util.huge_angle },
+    { position = 0.05, probability = 0.0006, angle_when_stopped = asteroid_util.huge_angle },
+    { position = 0.95, probability = 0.0018, angle_when_stopped = asteroid_util.huge_angle },
   },
   type_ratios =
   {

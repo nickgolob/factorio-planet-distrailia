@@ -1,0 +1,11 @@
+-- busted configuration (used by the real `busted` runner, e.g. in CI).
+-- Locally on Windows we use tools/run_specs.lua instead (no C-toolchain needed), but the
+-- spec files are identical and run under both.
+return {
+  default = {
+    -- Resolve require("lib.xxx") / require from the repo root.
+    lpath = "./?.lua;./?/init.lua",
+    ROOT = { "spec" },
+    pattern = "_spec",
+  },
+}

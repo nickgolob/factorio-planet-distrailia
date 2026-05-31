@@ -1,13 +1,15 @@
 {
   "name": "distrailia",
-  "version": "0.2.0",
-  "title": "Distrailia",
+  "version": "0.3.0",
+  "title": "○🌐Distrailia",
   "author": "nickgolob",
   "factorio_version": "2.0",
   "description": "A hellscape of demons and rails. Adds the planet Distrailia to the Space Age star map.",
   "dependencies": [
     "base >= 2.0",
     "space-age >= 2.0",
+    "PlanetsLib >= 1.11.1",
+    "? PlanetsLibTiers >= 1.2.0",
     "? elevated-rails >= 2.0"
   ]
 }

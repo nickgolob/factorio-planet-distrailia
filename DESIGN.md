@@ -37,13 +37,17 @@ Roadmap: see [`TODO.md`](TODO.md).
   - souls (the fluid) is the only stable, stockpile-able input.
   - souls, demonite, and hellstone never spawn near each other, so **rail transport is
     required** to move them between the scattered, heavily-defended outposts.
-- 1 new science pack (stable/shippable - does not spoil) + tech branch (as per a usual
-  modded planet); the superroboport tech sits at the top.
+- 1 new science pack (stable/shippable - does not spoil) + a **lean, self-contained tech
+  branch**: ~3 bootstrap techs -> the science pack -> the superroboport capstone at the top.
+  The branch only gates Distrailia's own techs and the superroboport (it does not feed the
+  wider tech tree). Specific techs/recipes follow the resource chain - TBD (owner: nick).
 - Full resource chain: TBD (owner: nick) - incl. the stable intermediates, which enemy each
   ore spawns on spoilage, exact spoil time (~30 s baseline), and co-spawn tuning.
 
 ## Access
 - Outermost world: further out than Secretas.
+- Placement & ordering: integrate with **PlanetsLib + PlanetsLibTiers**, like the pack's
+  other planets, so Distrailia slots into the tier ordering consistently.
 - Unlock technology: post-Aquilo, costs 2000 cryogenic science.
 - Voyage asteroids: the trip out is dense with huge asteroids (plus some big, no promethium),
   ramping up on approach. Parking idle in Distrailia's orbit is calm (no asteroids).

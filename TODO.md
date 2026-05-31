@@ -40,6 +40,7 @@ Status: `[x]` done, `[ ]` todo.
 
 ### M6 - Reward
 - [x] superroboport: roboport + hidden indestructible substation (power area scales with quality,
-  40x40 up to 50x50 at legendary), with a dedicated tech + recipe and the full build/remove lifecycle.
+  30x30 up to 50x50 at legendary; selectable to show its supply square + power GUI), with a
+  dedicated tech + recipe and the full build/remove lifecycle.
 - [ ] Final legendary-quality gating + recipe/tech wired to the M3 resource chain
   (demonite / Distrailia science). Currently placeholder ingredients, gated behind reaching Distrailia.

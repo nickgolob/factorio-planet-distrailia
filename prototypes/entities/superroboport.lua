@@ -4,12 +4,17 @@
 -- supplies a 50x50 power area, obtained at legendary quality at the top of the tech branch.
 --
 -- Implementation follows the confirmed "Utility Station" precedent: the visible, blueprintable
--- entity is a roboport, and a hidden, indestructible electric pole is spawned underneath it at
--- runtime (see control.lua) and removed with it. We take the quality-scaling option: the power area
--- scales with quality. Quality adds +1 to supply_area_distance per quality level and legendary
--- is level 5 (verified: small pole 2.5->7.5, substation 9->14), so a base of 20 gives 40x40 at
--- normal and lands on exactly 25 -> 50x50 at legendary. control.lua spawns the hidden pole at
--- the roboport's own quality so the two stay in lockstep.
+-- entity is a roboport, and a hidden electric pole sits underneath it (spawned at runtime by
+-- control.lua and removed with it) to supply power. The pole is selectable -- but not minable or
+-- deconstructable -- so you can hover its centre to see the blue supply-area square and click it
+-- to open the electric-network GUI, exactly like any pole. It keeps a substation's wire reach so
+-- it auto-joins the power grid.
+--
+-- The power area scales with quality. The engine's built-in pole bonus is a flat +1 to
+-- supply_area_distance per quality level, which could only span 40x40->50x50 -- a dull spread --
+-- so instead we define one hidden-pole variant per quality with an explicit supply_area_distance,
+-- spaced evenly across the quality tiers from a 30x30 floor (normal) to exactly 50x50 (legendary).
+-- control.lua spawns the variant matching the roboport's quality (at normal quality, no extra bonus).
 --
 -- TODO(M3): re-point the recipe ingredients and the technology cost/prerequisites onto the
 -- Distrailia resource chain (demonite + Distrailia science) and finalise the legendary-only
@@ -23,6 +28,7 @@
 --   Utility Station precedent: https://github.com/dmikalova/factorio-mods/tree/main/utility-station
 
 local util = require("util")
+local supply_area = require("lib.supply_area")
 
 local PARENT = "superroboport"
 local CHILD = "superroboport-substation"
@@ -42,7 +48,7 @@ local icons = {
   { icon = "__base__/graphics/icons/substation.png", icon_size = 64, scale = 0.5, shift = { 10, 10 } },
 }
 
--- Visible entity: a roboport with a slightly larger logistic/construction range. -----------
+-- Visible entity: a standard roboport (vanilla coverage). ----------------------------------
 local entity = util.table.deepcopy(roboport_proto)
 entity.name = PARENT
 entity.icon = nil
@@ -51,27 +57,27 @@ entity.icons = icons
 entity.minable = entity.minable or { mining_time = 1 }
 entity.minable.result = PARENT
 entity.placeable_by = { item = PARENT, count = 1 }
--- "Large radius" per DESIGN.md "The reward". Never shrink the vanilla values, and keep the two
--- dependent fields >= logistics_radius (the engine requires it), so clamp with math.max.
-entity.logistics_radius = math.max(entity.logistics_radius or 0, 32)
-entity.logistics_connection_distance =
-  math.max(entity.logistics_connection_distance or entity.logistics_radius, entity.logistics_radius)
-entity.construction_radius = math.max(entity.construction_radius or 0, 64)
+-- Keep vanilla roboport coverage so its logistic area stays the standard 50x50 -- the footprint
+-- the power supply area grows to match at legendary.
 entity.next_upgrade = nil
 entity.fast_replaceable_group = nil
 
--- Hidden substation, spawned under the roboport at runtime by control.lua. -----------------
--- Collides with nothing (it sits under the roboport), is invisible, unselectable and
--- indestructible, but keeps a substation's wire reach so it auto-joins the power grid.
+-- Hidden substation template, spawned under the roboport at runtime by control.lua. ---------
+-- Collides with nothing (it sits under the roboport) and is invisible, but is SELECTABLE (and
+-- indestructible / not minable) so you can hover its centre to see the blue supply-area square
+-- and click it to open the electric-network GUI, like any pole. Keeps a substation's wire reach
+-- so it auto-joins the power grid. supply_area_distance is set per quality variant below.
 local pole = util.table.deepcopy(substation_proto)
 pole.name = CHILD
-pole.localised_name = { "" }
-pole.localised_description = { "" }
-pole.supply_area_distance = 20 -- radius; quality adds +1/level -> 25 (50x50) at legendary, 40x40 at normal
-pole.selectable_in_game = false
+pole.localised_name = { "entity-name." .. PARENT }
+pole.localised_description = { "entity-description." .. PARENT }
+pole.selectable_in_game = true
 pole.collision_mask = { layers = {} }
 pole.collision_box = { { -0.05, -0.05 }, { 0.05, 0.05 } }
-pole.selection_box = nil
+pole.selection_box = { { -1, -1 }, { 1, 1 } } -- small centre target; the roboport (4x4) owns the rest
+-- Win the cursor over the roboport on that centre tile (both otherwise default to 50) so hovering
+-- the centre shows the blue supply-area square and clicking it opens the electric-network GUI.
+pole.selection_priority = 100
 pole.icon = nil
 pole.icon_size = nil
 pole.icons = icons
@@ -81,11 +87,12 @@ pole.icons = icons
 pole.pictures = { filename = "__core__/graphics/empty.png", width = 1, height = 1, direction_count = 1 }
 -- The pole's wire-connection-point count must equal pictures.direction_count. The vanilla
 -- substation ships 4 (one per rotation); collapse to a single point to match our 1-direction
--- empty sprite. Power still flows (grid connectivity is by wire reach, not point count) and
--- the point is never drawn (draw_copper_wires = false).
+-- empty sprite. Connectivity is by wire reach (not point count); the wire attaches at the centre.
 pole.connection_points = { { wire = { copper = { 0, 0 } }, shadow = { copper = { 0, 0 } } } }
 pole.radius_visualisation_picture = nil
-pole.draw_copper_wires = false -- power still connects logically; just no visible wire
+-- Show the copper wires so the superroboport is visibly part of the power grid. (It auto-connects
+-- either way -- draw_copper_wires only controls the graphic -- but hiding them made it look unpowered.)
+pole.draw_copper_wires = true
 pole.draw_circuit_wires = false
 pole.circuit_wire_max_distance = 0 -- no circuit-network hookups on the hidden pole
 pole.next_upgrade = nil
@@ -101,6 +108,35 @@ pole.flags = {
   "not-in-kill-statistics",
   "hide-alt-info",
 }
+
+-- One hidden-pole variant per quality, each with an explicit supply_area_distance so we own the
+-- curve (the engine's built-in +1/level only spans 40x40->50x50). Spaced evenly across the
+-- quality TIERS from a 30x30 floor (normal) to exactly 50x50 (legendary) -- i.e. by sorted rank,
+-- not by raw level (legendary is level 5, skipping 4, so scaling by level would leave an uneven
+-- jump at the top). control.lua spawns the variant named "<CHILD>-<quality>" at normal quality.
+local FLOOR_RADIUS = 15 -- normal -> 30x30
+local CAP_RADIUS = 25   -- legendary -> 50x50
+
+-- Sort the (non-hidden) qualities low -> high, then ask the pure curve module for an evenly
+-- spaced supply-area radius per tier. The arithmetic lives in lib/supply_area.lua so it can be
+-- unit-tested (spec/supply_area_spec.lua); here we only feed it the quality tier names.
+local qualities = {}
+for _, q in pairs(data.raw.quality or {}) do
+  if not q.hidden then qualities[#qualities + 1] = q end
+end
+table.sort(qualities, function(a, b) return (a.level or 0) < (b.level or 0) end)
+
+local sorted_names = {}
+for i, q in ipairs(qualities) do sorted_names[i] = q.name end
+local radius_by_quality = supply_area.curve(sorted_names, FLOOR_RADIUS, CAP_RADIUS)
+
+local pole_variants = {}
+for _, q in ipairs(qualities) do
+  local variant = util.table.deepcopy(pole)
+  variant.name = CHILD .. "-" .. q.name
+  variant.supply_area_distance = radius_by_quality[q.name]
+  pole_variants[#pole_variants + 1] = variant
+end
 
 -- Item -------------------------------------------------------------------------------------
 local item = util.table.deepcopy(data.raw.item["roboport"])
@@ -163,4 +199,8 @@ local tech = {
   order = "z-[" .. PARENT .. "]",
 }
 
-data:extend({ entity, pole, item, recipe, tech })
+local protos = { entity, item, recipe, tech }
+for _, variant in pairs(pole_variants) do
+  protos[#protos + 1] = variant
+end
+data:extend(protos)

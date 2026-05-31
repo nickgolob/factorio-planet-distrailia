@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Factorio runs a Lua 5.2 VM; match it so the pure modules are exercised on the same version.
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.2"
+      - uses: leafo/gh-actions-luarocks@v4
+
+      - name: Install luacheck + busted
+        run: |
+          luarocks install luacheck
+          luarocks install busted
+
+      - name: Static analysis (luacheck)
+        run: luacheck control.lua data.lua prototypes lib spec tools
+
+      - name: Unit tests (busted)
+        run: busted --verbose

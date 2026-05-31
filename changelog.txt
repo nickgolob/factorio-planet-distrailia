@@ -1,11 +1,23 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2026-05-30
+  Changes:
+    - Distrailia now places itself through PlanetsLib (orbiting "star"), joining the shared
+      orbit tree so orbit-aware mods keep it consistent. Its star-map position is unchanged
+      (distance 50, beyond Secretas).
+    - Registers a PlanetsLib: Tiers value (post-endgame, 6) when that mod is present, so
+      tier-aware mods order Distrailia at the far edge instead of the default tier.
+  Dependencies:
+    - Now requires PlanetsLib; optionally uses PlanetsLib: Tiers.
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2026-05-28
   Features:
-    - M6: Added the superroboport reward - a roboport fused with a hidden, indestructible
-      substation whose power supply area scales with quality, from 40x40 at normal up to 50x50
-      at legendary, plus a slightly larger logistic and construction range. Build, mine,
-      deconstruct, or destroy it and the two stay in sync.
+    - M6: Added the superroboport reward - a roboport fused with a hidden substation whose power
+      supply area scales with quality, from 30x30 at normal up to 50x50 at legendary (matching
+      the roboport's own 50x50 logistic area at legendary). The substation is selectable, so you
+      can see its supply square and open its electric-network GUI. Build, mine, deconstruct, or
+      destroy it and the two stay in sync.
     - M6: Added a dedicated "Superroboport" technology (unlocks the recipe) gated behind
       reaching Distrailia.
   Info:
