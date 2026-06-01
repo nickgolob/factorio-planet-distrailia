@@ -23,7 +23,13 @@ Only changing resources / decoratives? Skip `clear()` and just re-roll them in p
 
 ## After a prototype change (restart)
 - Run with only `base` + `space-age` + `distrailia` for the fastest startup.
-- Keep a test save already on Distrailia; after loading, run the generate/chart command above.
+- **Same-save re-roll (easiest):** keep a test save on Distrailia; after the restart run
+  **`/distrailia-regen`** (defined in `control.lua`). It calls `LuaPlanet.reset_map_gen_settings()`
+  to adopt the freshly loaded prototype map gen, then clears and regenerates around you -- no new
+  save, no stale surface settings. This is the loop: edit `prototypes/planet/map-gen.lua` ->
+  restart Factorio -> `/distrailia-regen`.
+- Manual alternative: the generate/chart `/c` command above (but it reuses the surface's *existing*
+  settings, so it won't pick up prototype changes -- `/distrailia-regen` does).
 - `/editor` gives a free camera + a live map-gen panel for eyeballing layouts without editing files.
 
 ## Tests

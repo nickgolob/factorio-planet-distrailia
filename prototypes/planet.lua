@@ -84,7 +84,7 @@ end
 -- regardless of frequency -- judge sparseness away from spawn. Dial live -- see DEV.md.
 local ore_controls = distrailia.map_gen_settings.autoplace_controls
 
-local rail_world_ore = { frequency = 0.2, size = 1, richness = 3 }
+local rail_world_ore = { frequency = 0.12, size = 1, richness = 8 }
 for _, ore in ipairs({ "iron-ore", "copper-ore", "coal", "stone", "uranium-ore", "crude-oil" }) do
   local control = ore_controls[ore] or {}
   control.frequency = rail_world_ore.frequency

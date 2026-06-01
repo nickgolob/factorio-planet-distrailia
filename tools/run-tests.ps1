@@ -34,7 +34,7 @@ $lua = Find-Exe @(
 $luacheck = Find-Exe @((Join-Path $root "tools\bin\luacheck.exe")) "luacheck"
 
 $failed = $false
-$targets = @("control.lua", "data.lua", "prototypes", "lib", "spec", "tests", "tools")
+$targets = @("control.lua", "data.lua", "prototypes", "tools")
 
 Write-Host "== luacheck ==" -ForegroundColor Cyan
 if ($luacheck) {
@@ -46,10 +46,10 @@ if ($luacheck) {
 
 Write-Host "`n== unit tests ==" -ForegroundColor Cyan
 if ($lua) {
-  $specs = @(Get-ChildItem -Path (Join-Path $root "spec") -Filter "*_spec.lua" -ErrorAction SilentlyContinue |
-    ForEach-Object { "spec/$($_.Name)" })
+  $specs = @(Get-ChildItem -Path (Join-Path $root "prototypes\entities\superroboport") -Filter "*_spec.lua" -ErrorAction SilentlyContinue |
+    ForEach-Object { "prototypes/entities/superroboport/$($_.Name)" })
   if (-not $specs -or $specs.Count -eq 0) {
-    Write-Warning "no spec files found under spec/"
+    Write-Warning "no spec files found under prototypes/entities/superroboport/"
   } else {
     & $lua "tools/run_specs.lua" @specs
     if ($LASTEXITCODE -ne 0) { $failed = $true }

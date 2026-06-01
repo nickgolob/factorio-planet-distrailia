@@ -17,11 +17,11 @@ rocks, so it uses a bundled `luacheck.exe` + a tiny pure-Lua shim and `tools/run
 Layout:
 
 ```
-.luacheckrc                luacheck config (per-load-stage Factorio globals)   [cross-platform]
+.luacheckrc                luacheck config (per-load-stage + *_spec/*_test suffix rules) [cross-platform]
 .busted                    busted config                                       [cross-platform]
-lib/                       pure, Factorio-free logic (unit-testable)
-spec/                      unit tests (busted-style)
-tests/                     in-game integration tests (FactorioTest)
+prototypes/entities/<feature>/   each feature co-locates its prototype(s), docs,
+                                 pure logic, unit tests (*_spec.lua) and in-game
+                                 tests (*_test.lua) -- e.g. prototypes/entities/superroboport/
 factorio-test.example.json integration config TEMPLATE (committed)
 factorio-test.json         your copy with a real factorioPath (gitignored)
 package.json               dev tooling (factorio-test-cli); NOT shipped with the mod
@@ -139,14 +139,14 @@ looks for `lua.exe` at `C:\MY PROGRAMS\Lua\bin`, `tools\bin\lua\`, then `PATH` �
 
 ### Static analysis
 ```bash
-luacheck control.lua data.lua prototypes lib spec tests tools      # macOS/Linux
-# Windows: .\tools\bin\luacheck.exe control.lua data.lua prototypes lib spec tests tools
+luacheck control.lua data.lua prototypes tools      # macOS/Linux
+# Windows: .\tools\bin\luacheck.exe control.lua data.lua prototypes tools
 ```
 
 ### Unit tests
 ```bash
 busted                                                             # macOS/Linux (reads .busted)
-# Windows: & "C:\MY PROGRAMS\Lua\bin\lua.exe" tools\run_specs.lua spec\supply_area_spec.lua
+# Windows: & "C:\MY PROGRAMS\Lua\bin\lua.exe" tools\run_specs.lua prototypes\entities\superroboport\supply_area_spec.lua
 ```
 (or just use the runner for your OS, which does luacheck + unit together.)
 
@@ -161,9 +161,9 @@ bash tools/run-tests.sh --integration        # macOS/Linux (all three tiers)
 ```
 
 It launches Factorio **headless** (no window) on a bundled empty-lab save, builds superroboports
-of various qualities, asserts the hidden substation variants + supply areas (`get_supply_area_distance`)
-+ cleanup, and exits non-zero on failure. `npx factorio-test run --help` lists flags
-(`--game-speed`, `--test-pattern`, `-g`/`--graphics` to watch it, …).
+of various qualities, and asserts the paired hidden roboport, the per-quality supply area
+(`get_supply_area_distance`), power, and cleanup; it exits non-zero on failure. `npx factorio-test
+run --help` lists flags (`--game-speed`, `--test-pattern`, `-g`/`--graphics` to watch it, …).
 
 **Why the isolated `dataDirectory`** (`./.factorio-test-data`, gitignored, set in the config): the
 run never touches your live game's mods/config, and it's the only way to run while a game is open
@@ -184,8 +184,12 @@ installed, then add a job invoking `factorio-test run`.
 ---
 
 ## Adding tests
-- **Pure logic** → put it in `lib/` (no Factorio globals) and add a `spec/<name>_spec.lua` using
-  `describe` / `it` / `assert.*` (luassert). It runs under both `busted` and `tools/run_specs.lua`.
-- **In-game behavior** → add `test(...)` blocks in `tests/` using plain `assert(cond, message)`
-  (FactorioTest 3.x does **not** provide luassert — `assert` is Lua's function), and list the
-  module in the `require("__factorio-test__/init")({ ... })` call at the bottom of `control.lua`.
+Tests live **beside the feature** (e.g. `prototypes/entities/superroboport/`); `.luacheckrc` and the
+runners pick them up by filename suffix, so location is flexible.
+- **Pure logic** → a Factorio-free module co-located with the feature, plus a `<name>_spec.lua`
+  beside it using `describe` / `it` / `assert.*` (luassert). Any `*_spec.lua` is run by
+  `busted` / `tools/run_specs.lua` and linted with busted globals.
+- **In-game behavior** → a `<name>_test.lua` beside the feature with `test(...)` blocks using plain
+  `assert(cond, message)` (FactorioTest 3.x does **not** provide luassert — `assert` is Lua's
+  function), and list the module in the `require("__factorio-test__/init")({ ... })` call at the
+  bottom of `control.lua`.

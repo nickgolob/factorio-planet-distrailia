@@ -19,7 +19,7 @@ failed=0
 
 echo "== luacheck =="
 if command -v luacheck >/dev/null 2>&1; then
-  luacheck control.lua data.lua prototypes lib spec tests tools || failed=1
+  luacheck control.lua data.lua prototypes tools || failed=1
 else
   echo "WARN: luacheck not found (luarocks install luacheck). Skipping static analysis." >&2
 fi
@@ -31,7 +31,7 @@ if command -v busted >/dev/null 2>&1; then
 elif command -v lua >/dev/null 2>&1; then
   echo "(busted not found; falling back to tools/run_specs.lua)"
   # shellcheck disable=SC2046
-  lua tools/run_specs.lua $(ls spec/*_spec.lua) || failed=1
+  lua tools/run_specs.lua $(ls prototypes/entities/superroboport/*_spec.lua) || failed=1
 else
   echo "ERROR: need 'busted' or 'lua' (brew install lua luarocks && luarocks install busted luacheck)." >&2
   failed=1

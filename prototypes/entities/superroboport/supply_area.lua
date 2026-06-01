@@ -1,9 +1,9 @@
 -- Pure supply-area curve math for the superroboport's hidden substation.
 --
 -- Deliberately free of any Factorio globals (no `data`, `util`, `game`, ...), so it can be
--- unit-tested with plain Lua / busted -- see spec/supply_area_spec.lua. The data stage
--- (prototypes/entities/superroboport.lua) reads the quality tiers from data.raw and asks this
--- module only for the arithmetic. Keep this file Lua 5.2-compatible (Factorio's VM).
+-- unit-tested with plain Lua / busted -- see supply_area_spec.lua. The data stage
+-- (prototypes/entities/superroboport/superroboport.lua) reads the quality tiers from data.raw and
+-- asks this module only for the arithmetic. Keep this file Lua 5.2-compatible (Factorio's VM).
 
 local supply_area = {}
 

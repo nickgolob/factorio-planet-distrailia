@@ -5,7 +5,7 @@ return {
   default = {
     -- Resolve require("lib.xxx") / require from the repo root.
     lpath = "./?.lua;./?/init.lua",
-    ROOT = { "spec" },
+    ROOT = { "prototypes/entities/superroboport" },
     pattern = "_spec",
   },
 }

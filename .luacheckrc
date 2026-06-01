@@ -48,13 +48,24 @@ local control_stage = {
 }
 files["control.lua"] = control_stage
 files["scripts/**/*.lua"] = control_stage
+-- Visual-test infrastructure (framework + helpers) runs in the control stage (game/rendering/...).
+files["visual_tests/**/*.lua"] = control_stage
+-- Feature-specific visual scenes are control-stage too, despite living under prototypes/. Spell the
+-- path out so it out-ranks the data-stage `prototypes/**/*.lua` glob below.
+files["prototypes/entities/superroboport/visual.lua"] = control_stage
 
--- Unit tests (pure logic): busted-style globals (describe / it / assert / ...).
-files["spec/**/*.lua"] = { std = "lua53+busted" }
+-- Test files co-locate with their feature (e.g. prototypes/entities/superroboport/). luacheck applies
+-- the SINGLE most-specific matching `files` pattern, so each suffix glob below is ALSO spelled out per
+-- feature dir to out-rank the data-stage `prototypes/**/*.lua` glob above for those co-located tests.
 
--- Integration tests run in the control stage under FactorioTest, which injects its own test
--- globals (test / async / after_ticks / ...) on top of the runtime API.
-files["tests/**/*.lua"] = {
+-- Unit tests (pure logic): busted-style globals.
+local busted_std = { std = "lua53+busted" }
+files["**/*_spec.lua"] = busted_std
+files["prototypes/entities/superroboport/*_spec.lua"] = busted_std
+
+-- Integration tests run in the control stage under FactorioTest, which injects its own test globals
+-- (test / async / after_ticks / ...) on top of the runtime API.
+local factorio_test = {
   std = "lua53", -- FactorioTest does NOT replace global `assert`; tests use plain assert(cond, msg)
   read_globals = { "game", "script", "rendering", "commands", "remote", "prototypes", "helpers", "storage" },
   globals = {
@@ -64,3 +75,5 @@ files["tests/**/*.lua"] = {
     "async", "done", "on_tick", "after_ticks", "ticks_between_tests", "tags",
   },
 }
+files["**/*_test.lua"] = factorio_test
+files["prototypes/entities/superroboport/*_test.lua"] = factorio_test

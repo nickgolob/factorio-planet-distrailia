@@ -39,8 +39,14 @@ Status: `[x]` done, `[ ]` todo.
   roboport + substation-badge composite).
 
 ### M6 - Reward
-- [x] superroboport: roboport + hidden indestructible substation (power area scales with quality,
-  30x30 up to 50x50 at legendary; selectable to show its supply square + power GUI), with a
-  dedicated tech + recipe and the full build/remove lifecycle.
+- [x] superroboport: the placed entity is a power POLE wearing the roboport building sprite (SE
+  Construction Pylon pattern); a hidden roboport is spawned under it (control.lua) for the bots +
+  construction/logistic radius. Power area scales 40x40 normal -> 50x50 legendary (engine pole bonus),
+  wire reach constant 50; tech + recipe + build/remove lifecycle. Integration-tested
+  (prototypes/entities/superroboport/superroboport_test.lua).
 - [ ] Final legendary-quality gating + recipe/tech wired to the M3 resource chain
   (demonite / Distrailia science). Currently placeholder ingredients, gated behind reaching Distrailia.
+- [ ] R-PREVIEW residue: the cursor shows the roboport sprite + power area + copper cables, but NOT
+  the roboport's construction/logistic radius squares or network lines (those come from the hidden
+  roboport, which only exists after build). Full "show everything" is not satisfiable with stock 2.0
+  modding -- see superroboport-approaches.md.

@@ -22,7 +22,7 @@ jobs:
           luarocks install busted
 
       - name: Static analysis (luacheck)
-        run: luacheck control.lua data.lua prototypes lib spec tools
+        run: luacheck control.lua data.lua prototypes tools
 
       - name: Unit tests (busted)
         run: busted --verbose

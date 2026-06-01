@@ -25,3 +25,7 @@ package-lock.json
 # Machine-specific integration-test config (has an absolute factorioPath). Commit the template
 # factorio-test.example.json instead; copy it to factorio-test.json per machine. See TESTING.md.
 /factorio-test.json
+
+# Steamworks shim so the visual-test runner can launch the graphics client directly (visual_tests/
+# run.ps1 recreates it). Just the Factorio app id; not part of the mod.
+/steam_appid.txt

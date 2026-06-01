@@ -1,4 +1,4 @@
--- Unit tests for the superroboport supply-area curve (lib/supply_area.lua).
+-- Unit tests for the superroboport supply-area curve (supply_area.lua).
 --
 -- Written in the busted style (describe / it / assert.*) so the SAME file runs under:
 --   * real busted          (CI / any machine with the Lua toolchain)
@@ -9,7 +9,7 @@
 -- spacing must be by tier rank, not by raw quality level). All expected values are exact in
 -- floating point, so assert.equals is safe (no tolerance needed).
 
-local supply_area = require("lib.supply_area")
+local supply_area = require("prototypes.entities.superroboport.supply_area")
 
 describe("supply_area.radius_for_rank", function()
   it("returns the cap for a single tier (avoids divide-by-zero)", function()
